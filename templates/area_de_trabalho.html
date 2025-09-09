@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NebulaOS • Single File</title>
+
+<!-- =======================================================================================
+     STYLES
+     ======================================================================================= -->
+<style>
+/* =======================================================================================
+   RESET + TOKENS
+   ======================================================================================= */
+:root{
+  --desktop-bg: #0b0b0f;
+  --glass: rgba(22,22,28,0.7);
+  --glass-2: rgba(255,255,255,0.06);
+  --stroke: rgba(255,255,255,0.08);
+  --shadow: 0 10px 40px rgba(0,0,0,0.45);
+  --radius-xl: 16px;
+  --radius-2xl: 22px;
+  --text: #e6e6f0;
+  --text-dim: #aeb2be;
+  --text-strong: #ffffff;
+  --accent: #6ee7ff;
+  --ok: #34d399;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --blur: blur(14px);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+html,body,div,span,applet,object,iframe,
+h1,h2,h3,h4,h5,h6,p,blockquote,pre,
+a,abbr,acronym,address,big,cite,code,
+del,dfn,em,img,ins,kbd,q,samp,
+small,strike,strong,sub,sup,tt,var,
+b,u,i,center,dl,dt,dd,ol,ul,li,
+fieldset,form,label,legend,
+table,caption,tbody,tfoot,thead,tr,th,td,
+article,aside,canvas,details,embed,
+figure,figcaption,footer,header,hgroup,
+menu,nav,output,ruby,section,summary,
+time,mark,audio,video{
+  margin:0; padding:0; border:0; font:inherit; vertical-align:baseline;
+}
+body{
+  font-family: "Inter","Segoe UI","SF Pro Text",system-ui,-apple-system,Arial,Helvetica,sans-serif;
+  color:var(--text);
+  background: var(--desktop-bg);
+  overflow:hidden;
+}
+
+/* =======================================================================================
+   WALLPAPER
+   ======================================================================================= */
+#wallpaper{
+  position:fixed; inset:0;
+  background: radial-gradient(1200px 700px at 70% 30%, #223 0%, rgba(20,20,28,0.4) 40%, transparent 60%),
+              radial-gradient(800px 500px at 20% 60%, #112 0%, rgba(10,10,16,0.3) 35%, transparent 60%),
+              var(--desktop-bg);
+  background-attachment: fixed;
+  transition: background .3s ease;
+}
+#wallpaper.wallpaper-loading{
+  filter: grayscale(.2) brightness(.9);
+}
+
+/* =======================================================================================
+   CLOCK (Rainmeter-like)
+   ======================================================================================= */
+#clock-widget{
+  position:fixed;
+  top:20px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:9999;
+  user-select:none;
+  text-align:center;
+  pointer-events:none;
+}
+#clock-time{
+  font-size:56px;
+  line-height:1;
+  font-weight:300;
+  letter-spacing:2px;
+  color:#fff;
+  text-shadow:0 2px 6px rgba(0,0,0,0.45);
+}
+#clock-date{
+  margin-top:10px;
+  font-size:16px;
+  color:#dfe3eb;
+  text-shadow:0 1px 3px rgba(0,0,0,0.35);
+}
+body.light #clock-time{ color:#111; text-shadow:0 2px 6px rgba(0,0,0,0.1) }
+body.light #clock-date{ color:#333; text-shadow:none }
+
+/* =======================================================================================
+   TOPBAR + TASKBAR
+   ======================================================================================= */
+.topbar{
+  position:fixed; top:0; left:0; right:0;
+  height:34px; display:flex; align-items:center; gap:8px;
+  padding:0 12px;
+  background: linear-gradient(to bottom, rgba(10,10,16,.35), rgba(10,10,16,.12));
+  backdrop-filter: var(--blur);
+  border-bottom:1px solid var(--stroke);
+  z-index: 9000;
+}
+.status-pill{
+  padding:4px 10px; border:1px solid var(--stroke);
+  border-radius:999px; font-size:12px; color:var(--text);
+  background: rgba(255,255,255,0.05);
+}
+.taskbar-wrap{
+  position:fixed; left:0; right:0; bottom:0;
+  padding:18px 0 12px; display:flex; justify-content:center;
+  z-index:9000; pointer-events:none;
+}
+.taskbar{
+  pointer-events:auto;
+  display:flex; gap:12px; align-items:center;
+  padding:8px 10px; border-radius:999px;
+  background: rgba(20,20,28,.45);
+  border:1px solid var(--stroke);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--shadow);
+}
+.task-icon{
+  width:42px; height:42px; border-radius:12px;
+  display:grid; place-items:center; cursor:pointer;
+  transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
+  color:#fff; font-size:20px; background:rgba(255,255,255,0.06);
+  border:1px solid var(--stroke);
+}
+.task-icon:hover{ transform: translateY(-2px); background:rgba(255,255,255,0.1) }
+.task-icon.active{ box-shadow:0 0 0 2px rgba(110,231,255,0.35) inset }
+
+/* =======================================================================================
+   DESKTOP ICONS
+   ======================================================================================= */
+.icones{
+  position:fixed; top:60px; left:18px; bottom:100px; width:160px;
+  display:flex; flex-direction:column; gap:14px; z-index:200;
+}
+.icones > div{
+  width:120px; padding:10px 8px; border-radius:12px;
+  text-align:center; cursor:default; user-select:none;
+  color:#f0f3ff; background:rgba(255,255,255,0.06);
+  border:1px solid var(--stroke); backdrop-filter: var(--blur);
+  transition: transform .15s ease, background .2s ease;
+}
+.icones > div span{ display:block; font-size:26px; margin-bottom:6px }
+.icones > div p{ font-size:13px }
+.icones > div:hover{ transform: translateY(-2px); background:rgba(255,255,255,0.1) }
+
+/* =======================================================================================
+   WINDOWS (app containers)
+   ======================================================================================= */
+.window{
+  position:fixed; width:820px; height:540px;
+  left:50%; top:50%; transform: translate(-50%, -50%) scale(.98);
+  opacity:0; pointer-events:none;
+  display:flex; flex-direction:column;
+  background: var(--glass);
+  border:1px solid var(--stroke);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow);
+  overflow:hidden;
+  transition: transform .18s ease, opacity .18s ease;
+}
+.window.active{
+  opacity:1; pointer-events:auto; transform: translate(-50%, -50%) scale(1);
+}
+.window.focus{ box-shadow:0 14px 50px rgba(0,0,0,0.55) }
+.window.fullscreen{
+  left:0; top:34px; right:0; bottom:0; width:auto; height:auto;
+  transform:none; border-radius:16px 16px 0 0;
+}
+
+/* Header (titlebar) */
+.window-header{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 12px; background: rgba(255,255,255,0.05);
+  border-bottom:1px solid var(--stroke);
+  backdrop-filter: blur(8px);
+}
+.window-title{ display:flex; align-items:center; gap:10px }
+.window-title .icon{ width:26px; height:26px; border-radius:8px;
+  display:grid; place-items:center; font-weight:700;
+  background:rgba(255,255,255,0.08); border:1px solid var(--stroke) }
+.window-title span{ font-weight:600 }
+.window-title .badge{
+  margin-left:6px; font-size:12px; color:#cbd5e1;
+  padding:2px 8px; border-radius:999px; border:1px solid var(--stroke);
+  background: rgba(255,255,255,0.06);
+}
+.win-controls{ display:flex; gap:8px; align-items:center }
+.win-btn{ width:14px; height:14px; border-radius:999px; cursor:pointer; transition: transform .15s ease }
+.win-btn.min{ background:#f5c242 }
+.win-btn.max{ background:#34d399 }
+.win-btn.close{ background:#ef4444 }
+.win-btn:hover{ transform: scale(1.1) }
+
+/* Body */
+.window-content{
+  position:relative; flex:1; background: rgba(0,0,0,0.25);
+  display:flex; color:#e5e7eb;
+}
+
+/* =======================================================================================
+   APP: FILES (simplificado)
+   ======================================================================================= */
+.files-root{ display:flex; flex-direction:column; gap:0; width:100% }
+.files-titlebar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 12px; border-bottom:1px solid var(--stroke);
+  background: rgba(255,255,255,0.04);
+}
+.files-path{ font-family: ui-monospace, "SFMono-Regular","Consolas",monospace; color:#cbd5e1 }
+.files-toolbar{
+  display:flex; gap:8px; align-items:center; padding:10px; border-bottom:1px solid var(--stroke);
+  background: rgba(255,255,255,0.02);
+}
+.files-toolbar button, .files-toolbar label{
+  padding:8px 10px; font-size:13px; background:rgba(255,255,255,0.07); color:#f8fafc; border:1px solid var(--stroke);
+  border-radius:10px; cursor:pointer; transition: background .15s ease, transform .12s ease;
+}
+.files-toolbar button:hover, .files-toolbar label:hover{ background:rgba(255,255,255,0.12); transform: translateY(-1px) }
+.files-toolbar input[type=file]{ display:none }
+.files-grid{
+  flex:1; padding:14px; display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:12px; overflow:auto;
+}
+.tile{
+  position:relative; padding:12px; border-radius:12px; border:1px solid var(--stroke);
+  background: rgba(255,255,255,0.05); cursor:default; user-select:none;
+}
+.tile .tile-icon{ font-size:30px; margin-bottom:6px }
+.tile .tile-name{ font-size:14px; color:#e2e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.tile .download-btn{
+  position:absolute; top:8px; right:8px; font-size:12px; padding:4px 6px; border-radius:8px;
+  background:rgba(255,255,255,0.08); border:1px solid var(--stroke); cursor:pointer;
+}
+
+/* Editor Overlay */
+#editorOverlay{
+  position:absolute; inset:0; background: rgba(10,10,16,0.7);
+  display:none; flex-direction:column;
+}
+.editor-header{
+  display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid var(--stroke);
+  background:rgba(255,255,255,0.04);
+}
+#editorContent{
+  flex:1; width:100%; padding:14px; font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  background:transparent; color:#e5e7eb; outline:none; border:none; resize:none;
+}
+
+/* =======================================================================================
+   APP: TERMINAL
+   ======================================================================================= */
+.term-root{ display:flex; flex-direction:column; width:100% }
+.term-screen{
+  position:relative; flex:1; overflow:auto; padding:12px;
+  font-family: ui-monospace, "SFMono-Regular","Consolas",monospace; line-height:1.4;
+}
+.term-screen .line{ margin:4px 0 }
+.prompt{ color:#60a5fa; margin-right:8px }
+#term-input{
+  font:inherit; color:#e5e7eb; background:transparent; border:none; outline:none; width:60%;
+}
+
+/* =======================================================================================
+   APP: BROWSER (Clean)
+   ======================================================================================= */
+.browser-clean{ flex-direction:column; background: rgba(0,0,0,0.2) }
+.browser-toolbar{
+  display:flex; gap:8px; align-items:center; padding:10px; border-bottom:1px solid var(--stroke);
+  background: rgba(255,255,255,0.03);
+}
+.browser-toolbar input{
+  flex:1; min-width:0; height:36px; padding:0 12px; border-radius:10px;
+  border:1px solid var(--stroke); background:rgba(255,255,255,0.06); color:#e5e7eb;
+}
+.browser-toolbar button{
+  height:36px; padding:0 12px; border-radius:10px; border:1px solid var(--stroke);
+  background:rgba(255,255,255,0.07); color:#e5e7eb; cursor:pointer;
+}
+.browser-toolbar .fs-btn{
+  width:36px; display:grid; place-items:center; font-size:16px; padding:0
+}
+#browser-frame{
+  flex:1; width:100%; height:100%; border:none; background:#111;
+}
+
+/* =======================================================================================
+   APP: PERSONALIZE (theme + presets)
+   ======================================================================================= */
+.persona-wrap{ display:flex; width:100% }
+.persona-sidebar{
+  width:260px; border-right:1px solid var(--stroke); background:rgba(255,255,255,0.03);
+  padding:12px; overflow:auto;
+}
+.persona-sidebar .preset{
+  display:flex; align-items:center; gap:10px; padding:8px; border:1px solid var(--stroke); background:rgba(255,255,255,0.05);
+  border-radius:10px; cursor:pointer; margin-bottom:8px;
+  transition: transform .12s ease, background .15s ease;
+}
+.persona-sidebar .preset:hover{ transform: translateY(-1px); background:rgba(255,255,255,0.1) }
+.preset .preview{ width:42px; height:28px; border-radius:8px; border:1px solid var(--stroke) }
+.persona-actions{ display:flex; gap:8px; margin-top:10px }
+.persona-actions button, .persona-actions label{
+  flex:1; padding:8px 10px; border-radius:10px; border:1px solid var(--stroke);
+  background:rgba(255,255,255,0.06); color:#e5e7eb; cursor:pointer;
+}
+.persona-content{ flex:1; padding:14px; overflow:auto }
+
+/* Theme toggle (sun/moon) */
+.theme-toggle{ display:flex; gap:10px; margin-top:8px }
+.theme-btn{
+  width:44px; height:44px; border:none; border-radius:50%;
+  display:grid; place-items:center; font-size:20px; cursor:pointer;
+  background:rgba(255,255,255,0.08); border:1px solid var(--stroke);
+  box-shadow:0 2px 6px rgba(0,0,0,0.25); transition: transform .25s ease, background .2s ease, rotate .25s ease;
+}
+.theme-btn:hover{ transform: scale(1.1) rotate(6deg); background:rgba(255,255,255,0.14) }
+.theme-btn:active{ transform: scale(.96) }
+
+/* =======================================================================================
+   APP: CALC
+   ======================================================================================= */
+.calc-wrap{ display:flex; flex-direction:column; width:100%; padding:14px; gap:12px }
+.calc-display{
+  height:70px; border-radius:12px; border:1px solid var(--stroke); background:rgba(255,255,255,0.06);
+  display:flex; align-items:center; justify-content:flex-end; padding:10px 14px; font-size:28px; font-weight:600;
+}
+.calc-grid{
+  display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;
+}
+.calc-grid button{
+  height:56px; border-radius:12px; border:1px solid var(--stroke); background:rgba(255,255,255,0.07);
+  color:#eef2ff; font-size:18px; cursor:pointer; transition: transform .08s ease, background .12s ease;
+}
+.calc-grid button:hover{ background:rgba(255,255,255,0.12) }
+.calc-grid .op{ background:rgba(99,102,241,0.18) }
+.calc-grid .equal{ background:rgba(34,197,94,0.22); font-weight:800 }
+
+/* =======================================================================================
+   APP: NETWORK
+   ======================================================================================= */
+.net-wrap{ display:flex; gap:18px; padding:14px; width:100% }
+.net-section{
+  flex:1; border:1px solid var(--stroke); border-radius:14px; padding:12px; background:rgba(255,255,255,0.06)
+}
+.net-row{ display:flex; justify-content:space-between; align-items:center; margin-top:8px }
+.net-badge{
+  padding:4px 10px; border-radius:999px; border:1px solid var(--stroke); background:#fff1;
+}
+
+/* =======================================================================================
+   TOAST
+   ======================================================================================= */
+.toast{
+  position:fixed; bottom:86px; left:50%; transform: translateX(-50%) translateY(20px);
+  background: rgba(20,20,26,.86); border:1px solid var(--stroke); color:#fff;
+  padding:10px 14px; border-radius:12px; box-shadow:var(--shadow);
+  opacity:0; transition: .25s ease; z-index:9200; pointer-events:none;
+}
+.toast.show{ opacity:1; transform: translateX(-50%) translateY(0) }
+
+/* =======================================================================================
+   CONTEXT MENU
+   ======================================================================================= */
+#context-menu{
+  position:fixed; top:0; left:0; min-width:220px; display:none; z-index:10000;
+  background: rgba(30,30,35,0.95); border:1px solid var(--stroke); border-radius:12px; box-shadow: var(--shadow);
+  animation: cm-enter .12s ease;
+}
+#context-menu ul{ list-style:none; padding:6px 0 }
+#context-menu li{
+  display:flex; align-items:center; gap:10px; padding:10px 14px; cursor:pointer; color:#e5e7eb; font-size:14px;
+}
+#context-menu li:hover{ background:rgba(255,255,255,0.09) }
+#context-menu .sep{ height:1px; margin:6px 8px; background:var(--stroke) }
+@keyframes cm-enter{ from{opacity:0; transform:scale(.96)} to{opacity:1; transform:scale(1)} }
+
+/* =======================================================================================
+   LIGHT MODE QUICK
+   ======================================================================================= */
+body.light{
+  --desktop-bg: #e5e7eb;
+  --glass: rgba(255,255,255,0.7);
+  --glass-2: rgba(0,0,0,0.04);
+  --stroke: rgba(0,0,0,0.08);
+  --text: #111827;
+  --text-dim: #374151;
+  --text-strong: #111827;
+}
+body.light .taskbar{ background: rgba(255,255,255,0.65) }
+body.light .task-icon{ color:#111 }
+body.light .icones > div{ color:#111 }
+body.light .window-content{ color:#111 }
+body.light .calc-grid button{ color:#111 }
+</style>
+</head>
+<body>
+
+<!-- =======================================================================================
+     WALLPAPER
+     ======================================================================================= -->
+<div id="wallpaper" aria-hidden="true"></div>
+
+<!-- =======================================================================================
+     CLOCK (Rainmeter-like)
+     ======================================================================================= -->
+<div id="clock-widget" aria-hidden="true">
+  <div id="clock-time">00:00</div>
+  <div id="clock-date">segunda-feira, 01 de janeiro</div>
+</div>
+
+<!-- =======================================================================================
+     TOPBAR
+     ======================================================================================= -->
+<div class="topbar" role="toolbar" aria-label="Barra superior">
+  <div class="status-pill" id="wifi">📶 Conectado</div>
+  <div class="status-pill" id="battery">🔋 --%</div>
+  <div class="status-pill" id="clock">--:--</div>
+</div>
+
+<!-- =======================================================================================
+     TASKBAR
+     ======================================================================================= -->
+<div class="taskbar-wrap">
+  <div class="taskbar" id="taskbar">
+    <div class="task-icon" data-app="files" title="Arquivos"><span class="emoji">🗂️</span></div>
+    <div class="task-icon" data-app="termicloud" title="Terminal"><span class="emoji">💻</span></div>
+    <div class="task-icon" data-app="browser" title="Navegador"><span class="emoji">🌐</span></div>
+    <div class="task-icon" data-app="personalize" title="Personalizar"><span class="emoji">🎨</span></div>
+    <div class="task-icon" data-app="calc" title="Calculadora"><span class="emoji">🧮</span></div>
+    <div class="task-icon" data-app="nebula" title="Rede"><span class="emoji">📶</span></div>
+  </div>
+</div>
+
+<!-- =======================================================================================
+     DESKTOP ICONS
+     ======================================================================================= -->
+<div id="icones" class="icones">
+  <div class="atalho1" data-app="files"><span>🗂️</span><p>Arquivos</p></div>
+  <div class="atalho2" data-app="termicloud"><span>💻</span><p>Terminal</p></div>
+  <div class="atalho3" data-app="browser"><span>🌐</span><p>Navegador</p></div>
+  <div class="atalho4" data-app="personalize"><span>🎨</span><p>Personalizar</p></div>
+  <div class="atalho5" data-app="calc"><span>🧮</span><p>Calculadora</p></div>
+  <div class="atalho6" data-app="nebula"><span>📶</span><p>Rede</p></div>
+  <div class="atalho7" data-app="intelegence"><span>🌐</span><p>Nebula Intelligence</p></div>
+</div>
+
+<!-- =======================================================================================
+     WINDOWS • FILES
+     ======================================================================================= -->
+<div id="files" class="window" aria-hidden="true" role="dialog" aria-label="Arquivos">
+  <div class="window-header" data-drag>
+    <div class="window-title">
+      <div class="icon">F</div><span>Files</span><span class="badge">Nebula</span>
+    </div>
+    <div class="win-controls">
+      <div class="win-btn min" data-action="minimize" title="Minimizar"></div>
+      <div class="win-btn max" data-action="maximize" title="Maximizar/Restaurar"></div>
+      <div class="win-btn close" data-action="close" title="Fechar"></div>
+    </div>
+  </div>
+  <div class="window-content">
+    <div class="files-root">
+      <div class="files-titlebar">
+        <div class="files-controls" aria-hidden="true">
+          <span class="files-dot close" title="Fechar" style="display:none"></span>
+          <span class="files-dot min" title="Minimizar" style="display:none"></span>
+          <span class="files-dot max" title="Maximizar" style="display:none"></span>
+        </div>
+        <div class="files-path" id="files-path">/</div>
+      </div>
+
+      <div class="files-toolbar">
+        <button id="btn-up">⬆ Subir</button>
+        <button id="btn-new-file">+ Arquivo</button>
+        <button id="btn-new-dir">+ Pasta</button>
+        <label>⬆ Upload<input id="input-upload" type="file" /></label>
+      </div>
+
+      <div class="files-grid" id="files-grid"></div>
+
+      <!-- Editor -->
+      <div id="editorOverlay">
+        <div class="editor-header">
+          <span id="editorFilename">Sem arquivo</span>
+          <div class="actions" style="display:flex; gap:8px">
+            <button id="btn-save">Salvar</button>
+            <button class="close" id="btn-close-editor">Fechar</button>
+          </div>
+        </div>
+        <textarea id="editorContent" spellcheck="false"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =======================================================================================
+     WINDOWS • TERMINAL
+     ======================================================================================= -->
+<div id="termicloud" class="window" aria-hidden="true" role="dialog" aria-label="Terminal">
+  <div class="window-header" data-drag>
+    <div class="window-title">
+      <div class="icon terminal-icon">></div>
+      <span>Terminal</span><span class="badge">Kali</span>
+    </div>
+    <div class="win-controls">
+      <div class="win-btn min" data-action="minimize" title="Minimizar"></div>
+      <div class="win-btn max" data-action="maximize" title="Maximizar/Restaurar"></div>
+      <div class="win-btn close" data-action="close" title="Fechar"></div>
+    </div>
+  </div>
+  <div class="window-content">
+    <div class="term-root">
+      <div id="term-screen" class="term-screen">
+        <div class="line">
+          <span class="prompt">┌──(㉿nebula)-[~]</span><br>
+          <span class="prompt">└─$</span>
+          <input type="text" id="term-input" autocomplete="off" spellcheck="false" autofocus>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .window {
+    background: #1e1e2e;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    font-family: monospace;
+    color: #00f5ff;
+  }
+
+  .window-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0f0f1a;
+    padding: 6px 10px;
+    color: #fff;
+    border-bottom: 1px solid #222;
+  }
+
+  .window-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .icon.terminal-icon {
+    font-weight: bold;
+    font-size: 14px;
+    background: #00f5ff;
+    color: #000;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .badge {
+    background: #005f73;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .win-controls {
+    display: flex;
+    gap: 8px;
+  }
+
+  .win-btn {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #555;
+    cursor: pointer;
+  }
+  .win-btn.min { background: #f5c542; }
+  .win-btn.max { background: #42f57b; }
+  .win-btn.close { background: #f54242; }
+
+  .term-screen {
+    background: #1a1b26;
+    padding: 15px;
+    min-height: 250px;
+    font-size: 14px;
+  }
+
+  .prompt {
+    color: #00f5ff;
+  }
+
+  #term-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-family: inherit;
+    width: 80%;
+  }
+</style>
+
+<!-- =======================================================================================
+     WINDOWS • BROWSER
+     ======================================================================================= -->
+<div id="browser" class="window" aria-hidden="true" role="dialog" aria-label="Navegador">
+  <div class="window-header" data-drag>
+    <div class="window-title">
+      <div class="icon">🌐</div><span>Navegador Nebula</span><span class="badge">Nebula</span>
+    </div>
+    <div class="win-controls">
+      <div class="win-btn min" data-action="minimize" title="Minimizar"></div>
+      <div class="win-btn max" data-action="maximize" title="Maximizar/Restaurar" id="browser-max"></div>
+      <div class="win-btn close" data-action="close" title="Fechar"></div>
+    </div>
+  </div>
+  <div class="window-content browser-clean">
+    <div class="browser-toolbar">
+      <input id="browser-url" type="text" placeholder="Digite uma URL (ex: https://example.com)" />
+      <button id="browser-go">Ir</button>
+      <button id="browser-fs" class="fs-btn" title="Tela cheia">⛶</button>
+    </div>
+    <iframe id="browser-frame" sandbox="allow-scripts allow-forms allow-popups allow-modals allow-same-origin" referrerpolicy="no-referrer"></iframe>
+  </div>
+</div>
+
+
+<div id="intelligence" class="window" aria-hidden="true" role="dialog" aria-label="Navegador">
+  <div class="window-header" data-drag>
+    <div class="window-title">
+      <div class="icon">🧠</div><span>Nebula Intelligence</span><span class="badge">Intelligence</span>
+    </div>
+    <div class="win-controls">
+      <div class="win-btn min" data-action="minimize" title="Minimizar"></div>
+      <div class="win-btn max" data-action="maximize" title="Maximizar/Restaurar"></div>
+      <div class="win-btn close" data-action="close" title="Fechar"></div>
+    </div>
+  </div>
+  <div class="window-content browser-clean">
+    <div class="browser-toolbar">
+      <input id="intel-url" type="text" placeholder="Digite uma URL (ex: https://example.com)" />
+      <button id="intel-go">Ir</button>
+      <button id="intel-fs" class="fs-btn" title="Tela cheia">⛶</button>
+    </div>
+    <iframe id="intel-frame"
+      src="https://nebula-intelligence.local"
+      sandbox="allow-scripts allow-forms allow-popups allow-modals allow-same-origin"
+      referrerpolicy="no-referrer"></iframe>
+  </div>
+</div>
+
+<script>
+/* =======================================================================================
+   NEBULA INTELLIGENCE BROWSER
+   ======================================================================================= */
+const intelFrame = document.querySelector("#intel-frame");
+const intelInput = document.querySelector("#intel-url");
+const intelGo    = document.querySelector("#intel-go");
+const intelFSBtn = document.querySelector("#intel-fs");
+
+// Normaliza URL para garantir https://
+function formatUrl(raw){
+  if(/^https?:\/\//i.test(raw)) return raw;
+  if(/^[\w.-]+\.[a-z]{2,}$/i.test(raw)) return "https://" + raw;
+  return "https://www.google.com/search?q=" + encodeURIComponent(raw);
+}
+
+// Navegar para URL
+function navigate(){
+  if(!intelFrame || !intelInput) return;
+  const raw = intelInput.value.trim();
+  if(!raw) return;
+  intelFrame.src = formatUrl(raw);
+}
+
+// Botão "Ir"
+intelGo?.addEventListener("click", navigate);
+
+// Enter no input
+intelInput?.addEventListener("keydown", (e)=>{
+  if(e.key === "Enter") navigate();
+});
+
+// Atualiza input quando iframe carregar
+intelFrame?.addEventListener("load", ()=>{
+  try {
+    intelInput.value = intelFrame.contentWindow.location.href;
+  } catch {
+    // Se for cross-origin, não dá pra acessar -> mantém a última URL digitada
+  }
+});
+
+// Botão fullscreen do iframe
+intelFSBtn?.addEventListener("click", ()=>{
+  const el = intelFrame;
+  if(!el) return;
+  const doc = document;
+  const isFS = doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement;
+  if(isFS){
+    (doc.exitFullscreen || doc.webkitExitFullscreen || doc.msExitFullscreen)?.call(doc);
+  }else{
+    (el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen)?.call(el);
+  }
+});
+</script>
+
+<!-- =======================================================================================
+     WINDOWS • PERSONALIZE
+     ======================================================================================= -->
+<div id="personalize" class="window" aria-hidden="true" role="dialog" aria-label="Personalizar">
+  <div class="window-header" data-drag>
+    <div class="window-title">
+      <div class="icon">🎨</div><span>Personalizar</span><span class="badge">Nebula</span>
+    </div>
+    <div class="win-controls">
+      <div class="win-btn min" data-action="minimize" title="Minimizar"></div>
+      <div class="win-btn max" data-action="maximize" title="Maximizar/Restaurar"></div>
+      <div class="win-btn close" data-action="close" title="Fechar"></div>
+    </div>
+  </div>
+  <div class="window-content">
+    <div class="persona-wrap">
+      <aside class="persona-sidebar">
+        <h3 style="margin-bottom:10px;">Papéis de parede</h3>
+
+        <!-- Presets -->
+        <div class="preset" data-gradient="radial-gradient(1200px 700px at 70% 30%, #223 0%, rgba(20,20,28,0.4) 40%, transparent 60%), radial-gradient(800px 500px at 20% 60%, #112 0%, rgba(10,10,16,0.3) 35%, transparent 60%), #0b0b0f">
+          <div class="preview" style="background:radial-gradient(1200px 700px at 70% 30%, #223 0%, rgba(20,20,28,0.4) 40%, transparent 60%), #0b0b0f"></div>
+          <div>Original Nebula</div>
+        </div>
+        <div class="preset" data-gradient="linear-gradient(120deg, #1e293b, #0f172a)">
+          <div class="preview" style="background:linear-gradient(120deg, #1e293b, #0f172a)"></div>
+          <div>Dark Slate</div>
+        </div>
+        <div class="preset" data-gradient="linear-gradient(135deg, #111827 0%, #0ea5e9 100%)">
+          <div class="preview" style="background:linear-gradient(135deg, #111827, #0ea5e9)"></div>
+          <div>Blue Aurora</div>
+        </div>
+        <div class="preset" data-gradient="radial-gradient(50% 60% at 70% 30%, #312e81 0%, #111827 60%)">
+          <div class="preview" style="background:radial-gradient(60% 60% at 60% 40%, #312e81, #111827)"></div>
+          <div>Indigo Glow</div>
+        </div>
+        <div class="preset" data-color="#101418">
+          <div class="preview" style="background:#101418"></div>
+          <div>Cor sólida</div>
+        </div>
+
+        <div class="persona-actions">
+          <label for="wp-upload" style="text-align:center; cursor:pointer">Upload
+            <input id="wp-upload" type="file" accept="image/*" style="display:none" />
+          </label>
+          <button id="wp-reset">Reset</button>
+        </div>
+      </aside>
+
+      <section class="persona-content">
+        <h2>Personalização do sistema</h2>
+        <p style="margin:10px 0 16px;color:var(--text-dim)">
+          Você pode escolher um papel de parede, enviar uma imagem ou usar o terminal:
+          <code>bg set &lt;URL|color:&lt;css&gt;|gradient:&lt;css&gt;&gt;</code> — tudo fica salvo.
+        </p>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px;">
+          <div style="background:rgba(255,255,255,0.08); border:1px solid var(--stroke); border-radius:12px; padding:14px;">
+            <h4>Modo</h4>
+            <div class="theme-toggle">
+              <button id="mode-dark" class="theme-btn" title="Escuro">🌙</button>
+              <button id="mode-light" class="theme-btn" title="Claro">☀️</button>
+            </div>
+          </div>
+         
+
+          <div style="background:rgba(255,255,255,0.08); border:1px solid var(--stroke); border-radius:12px; padding:14px;">
+            <h4>Sobre</h4>
+            <p style="color:var(--text-dim); margin-top:6px;">🌌 NebulaOS – um jeito leve e divertido de “OS” no navegador, com janelas, terminal e personalização.</p>
+          </div>
+
+          <div style="background:rgba(255,255,255,0.08); border:1px solid var(--stroke); border-radius:12px; padding:14px;">
+            <h4>Definir via link</h4>
+            <p style="color:var(--text-dim); margin:6px 0 10px">Cole abaixo um link direto de imagem:</p>
+            <div style="display:flex; gap:8px">
+              <input id="wp-url" placeholder="https://exemplo.com/imagem.jpg" style="flex:1; height:38px; padding:0 10px; border:1px solid var(--stroke); border-radius:10px; background:rgba(255,255,255,0.06); color:var(--text)" />
+              <button id="wp-apply-url" style="height:38px; padding:0 12px; border-radius:10px; border:1px solid var(--stroke); background:rgba(255,255,255,0.07); color:var(--text)">Aplicar</button>
+            </div>
+            <small style="display:block; margin-top:6px; color:var(--text-dim)">Dica: também funciona pelo terminal com <code>bg set https://...</code>.</small>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- =======================================================================================
+     WINDOWS • CALCULATOR
+     ======================================================================================= -->
+<div id="calc" class="window" aria-hidden="true" role="dialog" aria-label="Calculadora">
+  <div class="window-header" data-drag>
+    <div class="window-title">
+      <div class="icon">🧮</div><span>Calculadora</span><span class="badge">Nebula</span>
+    </div>
+    <div class="win-controls">
+      <div class="win-btn min" data-action="minimize" title="Minimizar"></div>
+      <div class="win-btn max" data-action="maximize" title="Maximizar/Restaurar"></div>
+      <div class="win-btn close" data-action="close" title="Fechar"></div>
+    </div>
+  </div>
+  <div class="window-content">
+    <div class="calc-wrap">
+      <div id="calc-display" class="calc-display">0</div>
+      <div class="calc-grid" id="calc-grid">
+        <button data-key="C" class="op">C</button>
+        <button data-key="⌫" class="op">⌫</button>
+        <button data-key="%" class="op">%</button>
+        <button data-key="/" class="op">÷</button>
+
+        <button data-key="7">7</button>
+        <button data-key="8">8</button>
+        <button data-key="9">9</button>
+        <button data-key="*" class="op">×</button>
+
+        <button data-key="4">4</button>
+        <button data-key="5">5</button>
+        <button data-key="6">6</button>
+        <button data-key="-" class="op">−</button>
+
+        <button data-key="1">1</button>
+        <button data-key="2">2</button>
+        <button data-key="3">3</button>
+        <button data-key="+" class="op">+</button>
+
+        <button data-key="0" style="grid-column: span 2">0</button>
+        <button data-key=",">,</button>
+        <button data-key="=" class="equal">=</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =======================================================================================
+     WINDOWS • NETWORK
+     ======================================================================================= -->
+<div id="nebula" class="window" aria-hidden="true" role="dialog" aria-label="Rede">
+  <div class="window-header" data-drag>
+    <div class="window-title">
+      <div class="icon">📶</div><span>Rede</span><span class="badge">Nebula</span>
+    </div>
+    <div class="win-controls">
+      <div class="win-btn min" data-action="minimize" title="Minimizar"></div>
+      <div class="win-btn max" data-action="maximize" title="Maximizar/Restaurar"></div>
+      <div class="win-btn close" data-action="close" title="Fechar"></div>
+    </div>
+  </div>
+  <div class="window-content">
+    <div class="net-wrap">
+      <div class="net-section">
+        <h3>Status</h3>
+        <div class="net-row">
+          <span>Conexão:</span>
+          <span id="net-online" class="net-badge">—</span>
+        </div>
+        <div class="net-row"><span>Navegador:</span> <code id="net-ua"></code></div>
+      </div>
+      <div class="net-section">
+        <h3>Ações</h3>
+        <div class="net-row" style="gap:8px">
+          <button id="net-simulate-off">Simular Offline</button>
+          <button id="net-simulate-on">Simular Online</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =======================================================================================
+     CONTEXT MENU (botão direito)
+     ======================================================================================= -->
+<div id="context-menu">
+  <ul>
+    <li data-action="terminal">💻 Abrir terminal</li>
+    <li data-action="browser">🌐 Abrir navegador</li>
+    <li data-action="personalize">🎨 Personalizar</li>
+    <div class="sep"></div>
+    <li data-action="refresh">⟳ Atualizar</li>
+  </ul>
+</div>
+
+<!-- =======================================================================================
+     TOAST
+     ======================================================================================= -->
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<!-- =======================================================================================
+     SCRIPTS
+     ======================================================================================= -->
+<script>
+/* =======================================================================================
+   UTIL
+   ======================================================================================= */
+const $ = sel => document.querySelector(sel);
+const $$ = sel => document.querySelectorAll(sel);
+const toast = $("#toast");
+
+function showToast(msg, timeout=1600){
+  if(!toast) return;
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), timeout);
+}
+
+/* Cookies (compat – usamos localStorage, mas persistimos também em cookie “quase ilimitado”) */
+function setCookie(name, value, days=3650){ // 10 anos
+  try{
+    const d = new Date();
+    d.setTime(d.getTime() + (days*24*60*60*1000));
+    document.cookie = `${name}=${encodeURIComponent(value)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
+  }catch(e){}
+}
+function getCookie(name){
+  try{
+    const cookies = document.cookie.split(";"); 
+    for (let c of cookies){
+      c = c.trim();
+      if (c.startsWith(name + "=")) return decodeURIComponent(c.split("=")[1]);
+    }
+  }catch(e){}
+  return null;
+}
+
+/* =======================================================================================
+   STATUS (clock/wifi/battery)
+   ======================================================================================= */
+function updateClockTopbar(){
+  const el = $("#clock");
+  if(!el) return;
+  el.textContent = new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+}
+setInterval(updateClockTopbar, 1000); updateClockTopbar();
+
+function updateWifi(){
+  const online = navigator.onLine;
+  $("#wifi").textContent = online ? "📶 Conectado" : "❌ Sem Internet";
+  const badge = $("#net-online");
+  if (badge) badge.textContent = online ? "Online" : "Offline";
+  if (badge) badge.style.background = online ? "#dcfce7" : "#fee2e2";
+  if (badge) badge.style.borderColor = online ? "#86efac" : "#fecaca";
+}
+window.addEventListener("online",updateWifi);
+window.addEventListener("offline",updateWifi);
+updateWifi();
+
+if(navigator.getBattery){
+  navigator.getBattery().then(b=>{
+    function up(){ $("#battery").textContent = `🔋 ${Math.round(b.level*100)}%` + (b.charging ? " ⚡" : ""); }
+    up(); b.addEventListener("levelchange",up); b.addEventListener("chargingchange",up);
+  }).catch(()=>{});
+}
+
+$("#net-ua").textContent = navigator.userAgent;
+
+/* =======================================================================================
+   WINDOWING (abrir/fechar/mover)
+   ======================================================================================= */
+const windows = $$(".window");
+const taskIcons = $$(".task-icon");
+const desktopIcons = $$(".icones > div");
+let zCounter = 50;
+
+function bringToFront(win){
+  zCounter += 1;
+  win.style.zIndex = zCounter;
+  windows.forEach(w => w.classList.remove("focus"));
+  win.classList.add("focus");
+}
+function openApp(appId){
+  const win = document.getElementById(appId);
+  if(!win){ showToast(`App não encontrado: ${appId}`); return; }
+  const icon = document.querySelector(`.task-icon[data-app="${appId}"]`);
+  const isOpen = win.classList.contains("active");
+  if(isOpen){
+    // alterna minimizar/restaurar
+    win.classList.remove("active","fullscreen");
+    icon?.classList.remove("active");
+    return;
+  }
+  $$(".task-icon").forEach(i=>i.classList.remove("active"));
+  icon?.classList.add("active");
+  win.classList.add("active");
+  win.classList.remove("fullscreen");
+  bringToFront(win);
+
+  // focos específicos
+  if(appId === "termicloud") setTimeout(()=>$("#term-input")?.focus(), 40);
+  if(appId === "files") renderFiles();
+  if(appId === "browser"){
+    // sempre que abre o navegador, aponta para Nebula Search
+    ensureNebulaSearch();
+  }
+}
+
+// clique nos ícones da taskbar / área de trabalho
+taskIcons.forEach(icon=> icon.addEventListener("click", ()=> openApp(icon.dataset.app)));
+desktopIcons.forEach(atalho=> atalho.addEventListener("dblclick", ()=> openApp(atalho.dataset.app)));
+
+// botões de janela
+$$('.win-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const action = btn.dataset.action;
+    const win = btn.closest('.window');
+    if(!win) return;
+    switch(action){
+      case 'close':
+      case 'minimize':
+        win.classList.remove('active','fullscreen');
+        document.querySelector(`.task-icon[data-app="${win.id}"]`)?.classList.remove('active');
+        break;
+      case 'maximize':
+        win.classList.toggle('fullscreen');
+        bringToFront(win);
+        break;
+    }
+  });
+});
+
+// foco ao clicar na janela
+windows.forEach(win=> win.addEventListener("mousedown", ()=> bringToFront(win)));
+
+// drag das janelas pela header
+(()=>{ 
+  let dragging=null; const headerSel='[data-drag]';
+  function onDown(e){
+    const header = e.target.closest(headerSel);
+    if(!header) return;
+    const win = header.closest(".window");
+    if(!win || win.classList.contains("fullscreen")) return;
+    const rect = win.getBoundingClientRect();
+    dragging = { win, startX:e.clientX, startY:e.clientY, startLeft:rect.left, startTop:rect.top };
+    document.body.style.userSelect = "none";
+    bringToFront(win);
+    if(!win.classList.contains("moved")){
+      win.style.left = rect.left + "px";
+      win.style.top  = rect.top + "px";
+      win.style.transform = "none";
+      win.classList.add("moved");
+    }
+  }
+  function onMove(e){ if(!dragging) return; const dx=e.clientX-dragging.startX, dy=e.clientY-dragging.startY; dragging.win.style.left = dragging.startLeft + dx + "px"; dragging.win.style.top  = dragging.startTop + dy + "px"; }
+  function onUp(){ if(!dragging) return; dragging=null; document.body.style.userSelect=""; }
+  document.addEventListener("mousedown", onDown);
+  document.addEventListener("mousemove", onMove);
+  document.addEventListener("mouseup", onUp);
+})();
+
+/* =======================================================================================
+   VIRTUAL FILE SYSTEM
+   ======================================================================================= */
+const STORAGE_KEY = "nebula.vfs";
+const DEFAULT_FS = {
+  type:"dir", name:"/", children:[
+    { type:"dir", name:"Documentos", children:[ { type:"file", name:"Notas.txt", content:"NebulaOS – bem-vindo! ✨\n\nEdite, salve e baixe arquivos." } ]},
+    { type:"dir", name:"Imagens", children:[] },
+    { type:"file", name:"Leia-me.md", content:"# NebulaOS\nArquivo de exemplo.\n" }
+  ]
+};
+
+function loadFS(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return structuredClone(DEFAULT_FS);
+    return JSON.parse(raw);
+  }catch{ return structuredClone(DEFAULT_FS); }
+}
+function saveFS(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(VFS)); }
+
+let VFS = loadFS();
+let cwd = [];
+function getNode(path=cwd){
+  let node = VFS;
+  for(const seg of path){
+    node = node.children.find(n=>n.name===seg && n.type==="dir");
+    if(!node) return null;
+  }
+  return node;
+}
+function pathToString(path=cwd){ return "/" + path.join("/"); }
+function ensureUniqueName(dir, base){
+  const list = dir.children.map(x=>x.name);
+  if(!list.includes(base)) return base;
+  let i=2; while(list.includes(`${base} ${i}`)) i++; return `${base} ${i}`;
+}
+
+/* =======================================================================================
+   FILES UI
+   ======================================================================================= */
+const filesGrid = $("#files-grid");
+const filesPath = $("#files-path");
+const editorOverlay = $("#editorOverlay");
+const editorContent = $("#editorContent");
+const editorFilename = $("#editorFilename");
+let openFileRef = null;
+
+function renderFiles(){
+  const dir = getNode();
+  if(!dir) return;
+  filesPath.textContent = pathToString() || "/";
+  filesGrid.innerHTML = "";
+
+  (dir.children||[]).forEach(item=>{
+    const tile = document.createElement("div");
+    tile.className = "tile";
+    tile.setAttribute("data-name", item.name);
+    tile.innerHTML = `
+      <button class="download-btn" title="Baixar">⬇</button>
+      <div class="tile-icon">${item.type==="dir" ? "📁" : "📄"}</div>
+      <div class="tile-name" title="${item.name}">${item.name}</div>
+    `;
+    tile.addEventListener("dblclick", ()=>{
+      if(item.type==="dir"){ cwd.push(item.name); renderFiles(); }
+      else{
+        openFileRef = { path:[...cwd], name:item.name };
+        editorFilename.textContent = "✏️ " + item.name;
+        editorContent.value = item.content || "";
+        editorOverlay.style.display = "flex";
+      }
+    });
+    tile.querySelector(".download-btn").addEventListener("click",(e)=>{
+      e.stopPropagation();
+      if(item.type==="dir"){ showToast("Compactação de pasta não implementada."); return; }
+      const blob = new Blob([item.content || ""], {type:"text/plain;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = item.name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },0);
+    });
+    filesGrid.appendChild(tile);
+  });
+}
+
+$("#btn-up").addEventListener("click", ()=>{ if(cwd.length){ cwd.pop(); renderFiles(); }});
+$("#btn-new-file").addEventListener("click", ()=>{
+  const dir = getNode(); const name = ensureUniqueName(dir, "Novo Arquivo.txt");
+  dir.children.push({ type:"file", name, content:"" }); saveFS(); renderFiles();
+});
+$("#btn-new-dir").addEventListener("click", ()=>{
+  const dir = getNode(); const name = ensureUniqueName(dir, "Nova Pasta");
+  dir.children.push({ type:"dir", name, children:[] }); saveFS(); renderFiles();
+});
+$("#input-upload").addEventListener("change", async (e)=>{
+  const file = e.target.files?.[0]; if(!file) return;
+  const text = await file.text();
+  const dir = getNode(); const name = ensureUniqueName(dir, file.name);
+  dir.children.push({ type:"file", name, content:text }); saveFS(); renderFiles(); e.target.value = ""; showToast(`Upload concluído: ${name}`);
+});
+
+$("#btn-save").addEventListener("click", ()=>{
+  if(!openFileRef) return;
+  const dir = getNode(openFileRef.path);
+  const file = dir?.children.find(n=>n.type==="file" && n.name===openFileRef.name);
+  if(file){ file.content = editorContent.value; saveFS(); showToast("✅ Arquivo salvo!"); }
+  editorOverlay.style.display = "none"; openFileRef = null; renderFiles();
+});
+$("#btn-close-editor").addEventListener("click", ()=>{ editorOverlay.style.display = "none"; openFileRef = null; });
+
+/* =======================================================================================
+   TERMINAL
+   ======================================================================================= */
+const termScreen = $("#term-screen");
+const termInput = $("#term-input");
+const wallpaper = $("#wallpaper");
+
+function printLine(html, color){
+  const line = document.createElement("div");
+  line.className = "line";
+  line.innerHTML = color ? `<span style="color:${color}">${html}</span>` : `<span>${html}</span>`;
+  termScreen && termScreen.insertBefore(line, termScreen.lastElementChild);
+}
+function currentDirListing(){
+  const dir = getNode();
+  return (dir?.children||[]).map(f=> f.type==="dir" ? `[${f.name}]` : f.name).join("  ");
+}
+
+/* =======================================================================================
+   WALLPAPER (persistente)
+   ======================================================================================= */
+const WP_KEY = 'nebula.wallpaper';
+function persistWallpaper(obj){
+  try{
+    localStorage.setItem(WP_KEY, JSON.stringify(obj));
+    setCookie(WP_KEY, JSON.stringify(obj), 3650); // redundância (10 anos)
+  }catch(e){}
+}
+function loadWallpaper(){
+  try{
+    const raw = localStorage.getItem(WP_KEY) || getCookie(WP_KEY);
+    if(!raw) return null; return JSON.parse(raw);
+  }catch{ return null; }
+}
+async function setWallpaper(input){
+  if(!wallpaper) return;
+  if(!input || !input.type){ return; }
+  wallpaper.classList.add('wallpaper-loading');
+  if(input.type==='color'){
+    wallpaper.style.backgroundImage = 'none';
+    wallpaper.style.background = input.value;
+    persistWallpaper(input);
+    wallpaper.classList.remove('wallpaper-loading');
+  } else if(input.type==='gradient'){
+    wallpaper.style.backgroundImage = 'none';
+    wallpaper.style.background = input.value;
+    persistWallpaper(input);
+    wallpaper.classList.remove('wallpaper-loading');
+  } else if(input.type==='image'){
+    await new Promise((resolve)=>{
+      const img = new Image();
+      img.onload = resolve;
+      img.onerror = resolve;
+      img.src = input.value;
+    });
+    wallpaper.style.background = `url('${input.value}') center/cover no-repeat fixed`;
+    persistWallpaper(input);
+    wallpaper.classList.remove('wallpaper-loading');
+  }
+}
+function resetWallpaper(){
+  const def = { type:'gradient', value: 'radial-gradient(1200px 700px at 70% 30%, #223 0%, rgba(20,20,28,0.4) 40%, transparent 60%), radial-gradient(800px 500px at 20% 60%, #112 0%, rgba(10,10,16,0.3) 35%, transparent 60%), #0b0b0f' };
+  setWallpaper(def);
+}
+
+/* =======================================================================================
+   TERMINAL COMMANDS
+   ======================================================================================= */
+const commands = {
+  help: () => `Comandos:
+  - help
+  - nebula clean
+  - echo_painel_print <texto>
+  - date
+  - whoami
+  - neofetch
+  - ls
+  - cd <pasta|..|/>
+  - open <arquivo>
+  - cat <arquivo>
+  - bg set <URL|color:<css>|gradient:<css>>
+  - bg reset`,
+
+  nebula: (args) => {
+    const sub = args[0];
+    if(sub === 'clean'){
+      if(!termScreen) return null;
+      [...termScreen.querySelectorAll('.line')].forEach(l=>{ if (l.querySelector?.('#term-input')) return; l.remove(); });
+      return 'Tela limpa.';
+    }
+    return 'Uso: nebula clean';
+  },
+
+  echo_painel_print: (args) => args.join(" "),
+  date: () => new Date().toString(),
+  whoami: () => "user",
+  logs:() => "teste de logs",
+  neofetch: () => `NebulaOS 2.0
+CPU: Virtual JS VM
+User Agent: ${navigator.userAgent}
+User: user`,
+
+  ls: () => currentDirListing() || "(vazio)",
+
+  cd: (args) => {
+    const target = args.join(" ").trim();
+    if(!target) return "Uso: cd <pasta|..|/>";
+    if(target === "/"){ cwd = []; return pathToString()||"/"; }
+    if(target === ".."){ if(cwd.length) cwd.pop(); return pathToString()||"/"; }
+    const dir = getNode();
+    if(dir?.children?.some(n=>n.type==="dir" && n.name===target)){ cwd.push(target); return pathToString(); }
+    return `Pasta não encontrada: ${target}`;
+  },
+
+  open: (args) => {
+    const name = args.join(" ").trim();
+    if(!name) return "Uso: open <arquivo>";
+    const dir = getNode();
+    const file = dir?.children?.find(n=>n.type==="file" && n.name===name);
+    if(!file) return `Arquivo não encontrado: ${name}`;
+    openFileRef = { path:[...cwd], name:file.name };
+    editorFilename.textContent = "✏️ " + file.name;
+    editorContent.value = file.content || "";
+    editorOverlay.style.display = "flex";
+    return `Abrindo ${name} no editor...`;
+  },
+
+  cat: (args) => {
+    const name = args.join(" ").trim();
+    if(!name) return "Uso: cat <arquivo>";
+    const dir = getNode();
+    const file = dir?.children?.find(n=>n.type==="file" && n.name===name);
+    if(!file) return `Arquivo não encontrado: ${name}`;
+    return (file.content || "").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>");
+  },
+
+  bg: (args) => {
+    const sub = args.shift();
+    if(sub === 'set'){
+      const rest = args.join(' ').trim();
+      if(!rest) return "Uso: bg set <URL|color:<css>|gradient:<css>>";
+      if(rest.startsWith('color:')){ setWallpaper({type:'color', value: rest.slice(6)}); return 'Wallpaper por cor aplicado e salvo.'; }
+      if(rest.startsWith('gradient:')){ setWallpaper({type:'gradient', value: rest.slice(9)}); return 'Wallpaper gradiente aplicado e salvo.'; }
+      try{ new URL(rest); setWallpaper({type:'image', value: rest}); return 'Wallpaper por imagem aplicado e salvo.'; }
+      catch{ return 'URL inválida. Use http(s) completo.'; }
+    }
+    if(sub === 'reset'){ resetWallpaper(); return 'Wallpaper resetado.'; }
+    return "Uso: bg <set|reset>";
+  }
+};
+
+if(termInput && termScreen){
+  termInput.addEventListener("keydown", async (e)=>{
+    if(e.key==='Enter'){
+      const value = termInput.value.trim();
+      if(value){
+        const [cmd, ...rawArgs] = value.split(" ");
+        const newLine = document.createElement("div");
+        newLine.className = "line";
+        newLine.innerHTML = `<span class="prompt">NebulaOS:~ ${pathToString() || "/" }$</span> ${value}`;
+        termScreen.insertBefore(newLine, termScreen.lastElementChild);
+
+        let output;
+        if(commands[cmd]){ output = commands[cmd]([...rawArgs]); }
+        else { output = `Comando '${cmd}' não encontrado. Digite 'help'.`; }
+
+        if (output instanceof Promise) {
+          const res = await output;
+          printLine(String(res).replace(/\n/g,"<br>"));
+        } else if (output !== undefined && output !== null) {
+          printLine(String(output).replace(/\n/g,"<br>"));
+        }
+      }
+      termInput.value='';
+      termScreen.scrollTop = termScreen.scrollHeight;
+    }
+  });
+}
+
+/* =======================================================================================
+   BROWSER (sempre abre Nebula Search ao iniciar)
+   ======================================================================================= */
+const browserWindow = $("#browser");
+const browserFrame  = $("#browser-frame");
+const browserInput  = $("#browser-url");
+const browserGo     = $("#browser-go");
+const browserFSBtn  = $("#browser-fs");
+
+function ensureNebulaSearch(){
+  if(!browserFrame) return;
+  const NEBULA_URL = "https://miguel02714.github.io/nebula-serch/";
+  if(browserFrame.src !== NEBULA_URL){
+    browserFrame.src = NEBULA_URL;
+    if(browserInput) browserInput.value = NEBULA_URL;
+  }
+}
+browserGo?.addEventListener("click", ()=>{
+  if(!browserFrame || !browserInput) return;
+  const raw = browserInput.value.trim();
+  if(!raw) return;
+  const finalUrl = (/^https?:\/\//i.test(raw)) ? raw
+                  : "https://www.google.com/search?q=" + encodeURIComponent(raw);
+  browserFrame.src = finalUrl;
+});
+
+
+
+browserFSBtn?.addEventListener("click", ()=>{
+  // Fullscreen apenas do iframe (quando permitido)
+  const el = browserFrame;
+  if(!el) return;
+  const doc = document;
+  const isFS = doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement;
+  if(isFS){
+    (doc.exitFullscreen || doc.webkitExitFullscreen || doc.msExitFullscreen)?.call(doc);
+  }else{
+    (el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen)?.call(el);
+  }
+});
+
+/* =======================================================================================
+   NEBULA INTELLIGENCE BROWSER (sempre abre Nebula Intelligence ao iniciar)
+   ======================================================================================= */
+const intelegence       = $("#inteligence");
+const intelegenceFrame  = $("#browser-frame");
+const intelegenceInput  = $("#browser-url");
+const intelegenceGo     = $("#browser-go");
+const intelegenceFSBtn  = $("#browser-fs");
+
+// URL padrão do Nebula Intelligence
+const NEBULA_INTEL_URL = "https://nebula-intelligence.local"; 
+// 👉 Troque pelo endereço real do seu "Nebula Intelligence"
+
+function openNebulaIntelligence(){
+  if(intelegenceFrame){
+    intelegenceFrame.src = NEBULA_INTEL_URL;
+  }
+  if(intelegenceInput){
+    intelegenceInput.value = NEBULA_INTEL_URL;
+  }
+}
+
+// Força abrir Nebula Intelligence assim que a janela é inicializada
+openNebulaIntelligence();
+
+// Botão "Ir" - navega para URL digitada
+intelegenceGo?.addEventListener("click", ()=>{
+  if(!intelegenceFrame || !intelegenceInput) return;
+  const raw = intelegenceInput.value.trim();
+  if(!raw) return;
+  const finalUrl = (/^https?:\/\//i.test(raw)) ? raw
+                  : "https://www.google.com/search?q=" + encodeURIComponent(raw);
+  intelegenceFrame.src = finalUrl;
+});
+
+// Botão fullscreen do iframe
+intelegenceFSBtn?.addEventListener("click", ()=>{
+  const el = intelegenceFrame;
+  if(!el) return;
+  const doc = document;
+  const isFS = doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement;
+  if(isFS){
+    (doc.exitFullscreen || doc.webkitExitFullscreen || doc.msExitFullscreen)?.call(doc);
+  }else{
+    (el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen)?.call(el);
+  }
+});
+
+
+/* =======================================================================================
+   CALCULATOR
+   ======================================================================================= */
+const calcDisplay = $("#calc-display");
+const calcGrid = $("#calc-grid");
+let calcBuffer = "0"; let calcLastOp = null; let calcAcc = null; let justEvaluated=false;
+
+function setDisplay(v){ calcDisplay.textContent = v; }
+function inputDigit(d){ if(justEvaluated){ calcBuffer='0'; justEvaluated=false; } if(calcBuffer==='0' && d!==' , '){ calcBuffer=''; } calcBuffer += d; setDisplay(calcBuffer.replace('.',',')); }
+function clearAll(){ calcBuffer='0'; calcLastOp=null; calcAcc=null; setDisplay('0'); }
+function backspace(){ if(justEvaluated){ clearAll(); return; } if(calcBuffer.length>1){ calcBuffer = calcBuffer.slice(0,-1);} else { calcBuffer='0'; } setDisplay(calcBuffer.replace('.',',')); }
+function toNumber(buf){ return Number(buf.replace(/,/g,'.')); }
+function applyOp(op){
+  const cur = toNumber(calcBuffer);
+  if(calcAcc===null){ calcAcc = cur; }
+  else{
+    if(calcLastOp === '+') calcAcc += cur;
+    if(calcLastOp === '-') calcAcc -= cur;
+    if(calcLastOp === '*') calcAcc *= cur;
+    if(calcLastOp === '/') calcAcc = cur===0 ? NaN : calcAcc / cur;
+    if(calcLastOp === '%') calcAcc = (calcAcc * cur)/100;
+  }
+  calcLastOp = op; calcBuffer = '0'; setDisplay(String(calcAcc).replace('.',','));
+}
+function evaluate(){
+  if(calcLastOp===null){ setDisplay(calcBuffer.replace('.',',')); justEvaluated=true; return; }
+  const cur = toNumber(calcBuffer);
+  if(calcLastOp === '+') calcAcc += cur;
+  if(calcLastOp === '-') calcAcc -= cur;
+  if(calcLastOp === '*') calcAcc *= cur;
+  if(calcLastOp === '/') calcAcc = cur===0 ? NaN : calcAcc / cur;
+  if(calcLastOp === '%') calcAcc = (calcAcc * cur)/100;
+  calcBuffer = String(calcAcc); calcLastOp=null; setDisplay(String(calcAcc).replace('.',',')); justEvaluated=true;
+}
+calcGrid.addEventListener('click', (e)=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  const key = btn.dataset.key;
+  if(!key) return;
+  if(/^[0-9]$/.test(key)){ inputDigit(key); return; }
+  if(key===','){ if(!calcBuffer.includes(',') && !calcBuffer.includes('.')){ calcBuffer += ','; setDisplay(calcBuffer); } return; }
+  if(key==='C'){ clearAll(); return; }
+  if(key==='⌫'){ backspace(); return; }
+  if(['+','-','*','/','%'].includes(key)){ applyOp(key); return; }
+  if(key==='='){ evaluate(); return; }
+});
+
+/* =======================================================================================
+   CONTEXT MENU (botão direito no wallpaper)
+   ======================================================================================= */
+const ctxMenu = $("#context-menu");
+document.addEventListener("contextmenu", (e)=>{
+  // Abre apenas se for no fundo (fora das janelas)
+  if(e.target.closest(".window")) return;
+  e.preventDefault();
+  ctxMenu.style.top = (e.clientY+1)+"px";
+  ctxMenu.style.left = (e.clientX+1)+"px";
+  ctxMenu.style.display = "block";
+});
+document.addEventListener("click", ()=> ctxMenu.style.display="none");
+
+ctxMenu.querySelectorAll("li").forEach(li=>{
+  li.addEventListener("click", ()=>{
+    const action = li.getAttribute("data-action");
+    ctxMenu.style.display="none";
+    switch(action){
+      case "terminal": openApp("termicloud"); break;
+      case "browser": openApp("browser"); ensureNebulaSearch(); break;
+      case "personalize": openApp("personalize"); break;
+      case "refresh": location.reload(); break;
+    }
+  });
+});
+
+/* =======================================================================================
+   CLOCK WIDGET (centro superior)
+   ======================================================================================= */
+(function initClockWidget(){
+  const elTime = $("#clock-time");
+  const elDate = $("#clock-date");
+  function update(){
+    const now = new Date();
+    elTime.textContent = now.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit", hour12:false});
+    elDate.textContent = now.toLocaleDateString("pt-BR",{weekday:"long", day:"2-digit", month:"long"});
+  }
+  setInterval(update, 1000);
+  update();
+})();
+
+/* =======================================================================================
+   PERSONALIZE (presets + upload + tema)
+   ======================================================================================= */
+$$(".preset").forEach(p=>{
+  p.addEventListener('click', ()=>{
+    const color = p.getAttribute('data-color');
+    const grad = p.getAttribute('data-gradient');
+    if(color) setWallpaper({type:'color', value: color});
+    else if(grad) setWallpaper({type:'gradient', value: grad});
+  });
+});
+$("#wp-upload").addEventListener('change', async (e)=>{
+  const file = e.target.files?.[0]; if(!file) return;
+  const url = URL.createObjectURL(file);
+  await setWallpaper({type:'image', value: url});
+  showToast('Imagem aplicada (nota: blob não persiste após reload — use link pelo terminal ou campo abaixo).');
+});
+$("#wp-reset").addEventListener('click', ()=> resetWallpaper());
+$("#wp-apply-url").addEventListener('click', ()=>{
+  const v = $("#wp-url").value.trim();
+  if(!v){ showToast("Cole uma URL de imagem"); return; }
+  try{ new URL(v); setWallpaper({type:'image', value:v}); showToast("Wallpaper via link aplicado e salvo!"); }
+  catch{ showToast("URL inválida"); }
+});
+
+/* Theme (dark/light) */
+const THEME_KEY = "nebula.theme";
+function applyTheme(theme){
+  if(theme === "dark"){
+    document.body.classList.add("dark");
+    document.body.classList.remove("light");
+  }else{
+    document.body.classList.add("light");
+    document.body.classList.remove("dark");
+  }
+  localStorage.setItem(THEME_KEY, theme);
+}
+(function initTheme(){
+  const saved = localStorage.getItem(THEME_KEY) || "dark";
+  applyTheme(saved);
+})();
+$("#mode-dark").addEventListener("click", ()=> applyTheme("dark"));
+$("#mode-light").addEventListener("click", ()=> applyTheme("light"));
+
+/* =======================================================================================
+   BOOT
+   ======================================================================================= */
+(function boot(){
+  // carregar papel de parede salvo
+  const wp = loadWallpaper();
+  if(wp){ setWallpaper(wp); } else { resetWallpaper(); }
+
+  // abrir status
+  updateWifi(); updateClockTopbar();
+
+  // abrir app padrao? (não abrimos nenhum por padrão)
+  showToast("NebulaOS iniciado ✨");
+})();
+</script>
+
+</body>
+</html>

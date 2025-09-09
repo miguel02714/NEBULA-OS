@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-Br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrando</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      background: #0d0d0d url('assets/icones/imagens/bg-neurabot.jpg') no-repeat center center fixed;
+      background-size: cover;
+      font-family: "Courier New", monospace;
+      color: #00ff88;
+    }
+
+    .texto {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 25px;
+      text-align: center;
+      letter-spacing: 2px;
+    }
+
+    .logs {
+      background-color: rgba(10, 10, 10, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+      max-height: 260px;
+      width: 85%;
+      max-width: 650px;
+      overflow-y: auto;
+      box-shadow: 0 0 20px rgba(0,255,136,0.3);
+    }
+
+    .logs p {
+      margin: 5px 0;
+      font-size: 14px;
+      color: #00ff88;
+      opacity: 0;
+      transition: opacity 0.4s ease-in;
+    }
+
+    /* Barra de carregamento */
+    .loading-container {
+      margin-top: 25px;
+      width: 80%;
+      max-width: 600px;
+      padding: 10px;
+    }
+
+    .loading-bar {
+      width: 100%;
+      height: 8px;
+      background: #1a1a1a;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .loading-progress {
+      height: 100%;
+      width: 30%;
+      background: linear-gradient(90deg, #00ff88, #00ffaa, #00ff88);
+      border-radius: 6px;
+      animation: load 1.5s infinite linear;
+    }
+
+    @keyframes load {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(300%); }
+    }
+
+    /* Botão */
+    #btn-entrar {
+      margin-top: 30px;
+      padding: 12px 30px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #0d0d0d;
+      background: #00ff88;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 15px rgba(0,255,136,0.5);
+      display: none;
+      transition: background 0.3s;
+    }
+
+    #btn-entrar:hover {
+      background: #00ffaa;
+    }
+  </style>
+</head>
+<body>
+  <p class="texto">INICIALIZANDO NEURABOT OS...</p>
+
+  <div class="logs" id="logContainer">
+    <p>[14:00:01] Boot sequence started...</p>
+    <p>[14:00:03] Kernel v5.12.9 loaded.</p>
+    <p>[14:00:05] Loading NeuraBot modules...</p>
+    <p>[14:00:07] AI Core ✓</p>
+    <p>[14:00:08] Neural Network Accelerator ✓</p>
+    <p>[14:00:10] Synapse link established.</p>
+    <p>[14:00:12] Secure channel initialized.</p>
+    <p>[14:00:15] User profile cache synced.</p>
+    <p>[14:00:18] NeuraBot Intelligence Online ✓</p>
+    <p>[14:00:20] System ready.</p>
+  </div>
+
+  <!-- Barra de carregamento -->
+  <div class="loading-container">
+    <div class="loading-bar">
+      <div class="loading-progress"></div>
+    </div>
+  </div>
+
+  <!-- Botão de entrar -->
+  <form action="/entrarpc" method="get">
+    <button type="submit" id="btn-entrar">Entrar</button>
+  </form>
+
+  <script>
+    const logs = document.querySelectorAll(".logs p");
+    const btnEntrar = document.getElementById("btn-entrar");
+
+    logs.forEach(log => log.style.opacity = "0");
+
+    let i = 0;
+    function mostrarLogs() {
+      if (i < logs.length) {
+        logs[i].style.opacity = "1";
+        i++;
+        setTimeout(mostrarLogs, 700); 
+      } else {
+        setTimeout(() => {
+          btnEntrar.style.display = "inline-block";
+        }, 600);
+      }
+    }
+
+    window.onload = mostrarLogs;
+  </script>
+</body>
+</html>

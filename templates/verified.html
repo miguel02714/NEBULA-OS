@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verificar Conta</title>
+    <style>
+      /* Reset básico */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        background: linear-gradient(135deg, #8e2de2, #4a00e0);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        color: #333;
+      }
+
+      .container {
+        background: #fff;
+        padding: 2rem;
+        border-radius: 1rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+      }
+
+      .container h1 {
+        font-size: 1.5rem;
+        color: #4a00e0;
+        margin-bottom: 1rem;
+      }
+
+      .container input {
+        width: 100%;
+        padding: 0.8rem;
+        font-size: 1rem;
+        border: 2px solid #ccc;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        outline: none;
+        transition: border-color 0.3s;
+      }
+
+      .container input:focus {
+        border-color: #4a00e0;
+      }
+
+      .container button {
+        width: 100%;
+        padding: 0.8rem;
+        font-size: 1rem;
+        background: #4a00e0;
+        color: #fff;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+
+      .container button:hover {
+        background: #3600b3;
+      }
+    </style>
+  </head>
+  <body>
+    <form action="/verified" method="post">
+    <div class="container">
+      <h1>Verificar Conta</h1>
+      <input
+        type="text"
+        placeholder="Digite o código enviado ao seu e-mail..."
+        maxlength="6"
+        id="codigo"
+        name="codigo"
+      />
+      <button type="submit">Verificar Código</button>
+    </div>
+    </form>
+  </body>
+</html>

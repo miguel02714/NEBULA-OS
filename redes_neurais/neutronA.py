@@ -1,0 +1,1 @@
+def achar_similaridade():

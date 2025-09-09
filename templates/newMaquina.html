@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar Máquina</title>
+  <style>
+    /* Reset */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", Arial, Helvetica, sans-serif;
+      background: #0a0a0a;
+      color: #eaeaea;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center; /* centraliza vertical */
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 25px;
+      text-align: center;
+      color: #fff;
+    }
+
+    form {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      background: #111;
+      padding: 30px;
+      border: 1px solid #222;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    input[type="text"], 
+    input[type="password"],
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #333;
+      border-radius: 8px;
+      background: #1a1a1a;
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+
+      /* ícone seta */
+      padding-right: 40px;
+      background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 18px;
+    }
+
+    input:focus, select:focus {
+      border-color: #005bea;
+      background: #1f1f1f;
+    }
+
+    input::placeholder {
+      color: #777;
+    }
+
+    label {
+      font-size: 14px;
+      color: #ccc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .btn {
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #3a9bdc, #005bea);
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    .btn:hover {
+      background: linear-gradient(135deg, #005bea, #3a9bdc);
+      transform: scale(1.02);
+    }
+
+    .plano, .local {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .plano label, .local label {
+      font-size: 13px;
+      color: #aaa;
+      font-weight: 500;
+    }
+
+    /* responsivo */
+    @media (max-width: 480px) {
+      h1 { font-size: 22px; }
+      form { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <h1>Criar Nova Máquina</h1>
+    <form action="/criar_maquina" method="POST">
+      <input type="text" name="maquina" placeholder="Nome da máquina" required>
+      <input type="password" name="senha" placeholder="Senha da máquina" required>
+
+      <!-- planos -->
+      <div class="plano">
+        <label for="plano">Escolha o tipo de máquina:</label>
+        <select name="plano" id="plano" required>
+          <option value="">Selecione um plano...</option>
+          <option value="basic">Básico — 1 CPU / 2GB RAM (FREE)</option>
+          <option value="standard">Standard — 2 CPU / 4GB RAM (R$10)</option>
+          <option value="premium">Premium — 4 CPU / 8GB RAM (R$25)</option>
+        </select>
+      </div>
+
+      <!-- local -->
+      <div class="local">
+        <label for="local">Escolha o local da máquina:</label>
+        <select name="local" id="local" required>
+          <option value="">Selecione um local</option>
+          <option value="sg">Singapura</option>
+          <option value="sp">São Paulo</option>
+          <option value="xx">Desconhecido</option>
+        </select>
+      </div>
+
+      <label>
+        <input type="checkbox" name="termos_de_uso" required>
+        <span>Aceito os termos da plataforma</span>
+      </label>
+      <button type="submit" class="btn">Criar Máquina</button>
+    </form>
+  </div>
+</body>
+</html>

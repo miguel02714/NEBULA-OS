@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nebula OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', sans-serif; }
+
+  body {
+    background-image: url("assets/icones/imagens/Design\ sem\ nome\ \(17\).png"); /* fundo limpo da tela inicial */
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    overflow-x:hidden;
+    height: 150PX;
+  }
+
+  /* Navbar */
+  .nav {
+    background:#8c52ff;
+    color:#fff;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    width: 100%;
+    max-width: 1200px;
+    padding:16px 24px;
+    border-radius:0 0 12px 12px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.2);
+    position: sticky;
+    top:0;
+    z-index: 10;
+  }
+.nav::before {
+  content: "";
+  position: absolute;
+  top: -20%; left: -20%; right: -20%; bottom: -20%;
+  border-radius: 12px 12px 0 0;
+  background: radial-gradient(circle at 30% 30%, rgba(180,82,255,0.5), transparent 50%),
+              radial-gradient(circle at 70% 70%, rgba(100,82,255,0.5), transparent 50%);
+  filter: blur(30px);
+  z-index: -1;
+  animation: waveNav 6s infinite ease-in-out alternate;
+}
+
+@keyframes waveNav {
+  0%   { transform: scale(1) translate(0,0); opacity: 0.5; }
+  50%  { transform: scale(1.05) translate(10px,-5px); opacity: 0.8; }
+  100% { transform: scale(1) translate(-10px,5px); opacity: 0.5; }
+}
+  .nav p { 
+    font-size:24px; 
+    font-weight:700; 
+    letter-spacing:1px;
+  }
+
+  .opcoes {
+    display:flex;
+    gap:24px;
+  }
+
+  .opcoes a {
+    text-decoration:none;
+    color:white;
+    font-weight:500;
+    transition:0.3s;
+  }
+
+  .opcoes a:hover {
+    color:#e0d4ff;
+  }
+
+  .botoes { 
+    display:flex; 
+    gap:12px; 
+  }
+
+  .registro, .login {
+    padding:8px 18px;
+    border:none;
+    border-radius:8px;
+    background:white;
+    color:#8c52ff;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s;
+  }
+  .registro:hover, .login:hover { 
+    transform:scale(1.05); 
+    box-shadow:0 2px 6px rgba(0,0,0,0.2);
+  }
+
+  /* Seção Principal */
+  .container-principal {
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content:center;
+    text-align:center;
+    padding:120px 24px 60px 24px;
+    max-width: 1000px;
+    margin-right: 900px;
+  }
+
+  .texto {
+    font-size:42px;
+    font-weight:700;
+    line-height:1.4;
+    margin-top: 25%;
+  }
+
+  /* Palavra animada */
+  .animated-word {
+    display:inline;
+    border-right: 2px solid white;
+    padding-right: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  /* Quem Somos - fundo preto total */
+  #quem-somos {
+    background-image: url(assets/icones/imagens/Design\ sem\ nome\ \(19\)_PhotoGrid.png);
+    color: white;
+    padding: 100px 24px;
+    width: 100%;
+    margin-top: 450px;
+    text-align: center;
+    
+  }
+
+  #quem-somos .container {
+    max-width: 900px;
+    margin: 0 auto;
+    margin-left: 1000px;
+
+  }
+
+  #quem-somos h2 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    margin-top: 100px;
+    color: white;
+  }
+
+  #quem-somos h3 {
+    font-size: 24px;
+    margin-top: 30px;
+    margin-bottom: 12px;
+    color: #e0d4ff;
+  }
+
+  #quem-somos p {
+    font-size: 18px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    color: #ddd;
+  }
+
+  #quem-somos ul {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+  }
+
+  #quem-somos ul li {
+    margin-bottom: 12px;
+    font-size: 18px;
+  }
+
+  /* Responsividade */
+  @media(max-width:768px){
+    .texto {
+      font-size: 28px;
+    }
+    .nav {
+      flex-direction: column;
+      gap: 12px;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <div class="nav">
+    <p>NEBULA OS</p>
+    <div class="opcoes">
+      <a href="#quem-somos">QUEM SOMOS</a>
+      <a href="">DÚVIDAS</a>
+      <a href="">APLICATIVOS</a>
+    </div>
+    <div class="botoes">
+      <form action="/registro" method="post"><button class="registro">REGISTRO</button></form>
+      <form action="/login" method="post"><button class="login">LOGIN</button></form>
+    </div>
+  </div>
+
+  <!-- Seção Principal -->
+  <div class="container-principal">
+    <div class="texto">
+      O SEU PRIMEIRO <span class="animated-word" id="animated-word"></span></Br> WEB ACESSÍVEL DE QUALQUER LUGAR
+    </div>
+  </div>
+
+  <!-- Quem Somos -->
+  <section id="quem-somos">
+    <div class="container">
+      <h2>Quem Somos</h2>
+      <p>
+        Bem-vindo ao <strong>Nebula OS</strong>! Somos uma equipe apaixonada por tecnologia que acredita
+        que um sistema operacional pode ser muito mais do que apenas uma ferramenta: ele deve ser
+        simples, seguro e poderoso ao mesmo tempo.
+      </p>
+      <p>
+        Nosso objetivo é criar um ambiente moderno que una <strong>produtividade</strong>,
+        <strong>entretenimento</strong> e <strong>desenvolvimento</strong> em um só lugar,
+        com uma interface leve e intuitiva para qualquer tipo de usuário.
+      </p>
+
+      <h3>Nossa Missão</h3>
+      <p>
+        Oferecer um sistema operacional web de alta performance, que permita liberdade de criação,
+        segurança avançada e uma experiência limpa e sem distrações.
+      </p>
+
+      <h3>Nossos Valores</h3>
+      <ul>
+        <li>🔒 Segurança e privacidade em primeiro lugar</li>
+        <li>⚡ Performance otimizada para qualquer dispositivo</li>
+        <li>🎨 Design minimalista e funcional</li>
+        <li>🌐 Acessibilidade para todos os perfis de usuários</li>
+        <li>🤝 Comunidade e colaboração aberta</li>
+      </ul>
+
+      <h3>Por que o Nebula OS?</h3>
+      <p>
+        Diferente de outros sistemas, o Nebula OS traz <strong>máquinas virtuais isoladas</strong>,
+        <strong>proxies individuais</strong> e uma <strong>IA integrada</strong> para tornar a
+        experiência mais fluida, prática e segura. Tudo isso direto do navegador, sem complicação.
+      </p>
+    </div>
+  </section>
+ <section id="faq">
+  <div class="container">
+    <h2>❓ Perguntas Frequentes</h2>
+
+    <div class="faq-item">
+      <button class="faq-question">O que é o Nebula OS?</button>
+      <div class="faq-answer">
+        <p>O Nebula OS é um sistema operacional web que roda direto do navegador, sem precisar de instalação. Ele traz máquinas virtuais, IA integrada e muito mais.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question">Preciso instalar algo?</button>
+      <div class="faq-answer">
+        <p>Não! Basta acessar pelo navegador, fazer login e já pode começar a usar o sistema completo.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question">Funciona em celulares?</button>
+      <div class="faq-answer">
+        <p>Sim! Ele foi feito para ser responsivo e se adaptar em qualquer dispositivo, seja celular, tablet ou computador.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question">O Nebula OS é gratuito?</button>
+      <div class="faq-answer">
+        <p>O acesso básico é gratuito, mas algumas funções avançadas podem ser liberadas em planos premium futuramente.</p>
+      </div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question">Como funciona o ecossitema Nebula?</button>
+      <div class="faq-answer">
+        <p>Como nosso maior desejo e a segurança, criamos cuidadosamente todo um ecossistema de aplicativos, focando em segurança, designer, leveza e velocidade</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<style>
+  #faq {
+    background-image: url(assets/icones/imagens/Design\ sem\ nome\ \(18\).png);
+    color: white;
+    padding: 100px 24px;
+    width: 100%;
+    text-align: center;
+  }
+
+  #faq .container {
+    max-width: 800px;
+    margin: 0 auto;
+    margin-top: 200px;
+    text-align: left;
+  }
+
+  #faq h2 {
+    font-size: 32px;
+    margin-bottom: 30px;
+    text-align: center;
+    color: white;
+  }
+
+  .faq-item {
+    margin-bottom: 16px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #2a2a2a;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+
+  .faq-question {
+    width: 100%;
+    background: #8c52ff;
+    color: white;
+    padding: 16px;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: left;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .faq-question:hover {
+    background: #613cc1;
+  }
+
+  .faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s ease;
+    background: #1a1a1a;
+    padding: 0 16px;
+  }
+
+  .faq-answer p {
+    margin: 12px 0;
+  }
+
+  .faq-item.active .faq-answer {
+    max-height: 300px;
+    padding: 12px 16px;
+  }
+</style>
+
+<script>
+  document.querySelectorAll(".faq-question").forEach(button => {
+    button.addEventListener("click", () => {
+      const faqItem = button.parentElement;
+      faqItem.classList.toggle("active");
+    });
+  });
+</script>
+
+
+
+<script>
+const words = ["NAVEGADOR", "AMBIENTE", "PLATAFORMA", "OS"];
+let i = 0;
+let timer;
+const wordElement = document.getElementById("animated-word");
+
+function typeWord(word, callback) {
+  let index = 0;
+  wordElement.textContent = "";
+  timer = setInterval(() => {
+    wordElement.textContent += word[index];
+    index++;
+    if (index === word.length) {
+      clearInterval(timer);
+      setTimeout(callback, 1000);
+    }
+  }, 150);
+}
+
+function deleteWord(callback) {
+  let content = wordElement.textContent;
+  let index = content.length;
+  timer = setInterval(() => {
+    wordElement.textContent = content.slice(0, index - 1);
+    index--;
+    if (index === 0) {
+      clearInterval(timer);
+      setTimeout(callback, 500);
+    }
+  }, 100);
+}
+
+function loopWords() {
+  typeWord(words[i], () => {
+    deleteWord(() => {
+      i = (i + 1) % words.length;
+      loopWords();
+    });
+  });
+}
+
+loopWords();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NebulaOS • Files</title>
+<style>
+:root{
+  --bg: #ececec;
+  --panel: #f9f9f9;
+  --border: #d0d0d0;
+  --text: #222;
+  --muted: #555;
+  --accent: #007aff; /* Azul macOS */
+  --danger: #ff3b30;
+}
+*{margin:0; padding:0; box-sizing:border-box;}
+body{
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.files-shell{
+  width:95%; height:90vh;
+  background:var(--panel);
+  border-radius:12px;
+  border:1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  display:flex; flex-direction:column;
+  overflow:hidden;
+}
+
+/* Barra superior estilo macOS */
+.titlebar{
+  padding:8px 16px;
+  background:linear-gradient(to bottom, #f5f5f7, #e1e1e3);
+  font-weight:500;
+  border-bottom:1px solid var(--border);
+  display:flex; justify-content:flex-start; align-items:center;
+  position:relative;
+}
+
+/* Bolinhas do macOS */
+.window-controls{
+  display:flex; gap:8px; margin-right:12px;
+}
+.control-btn{
+  width:12px; height:12px; border-radius:50%;
+  display:inline-block;
+}
+.close{ background:var(--danger); }
+.minimize{ background:#ffcc00; }
+.maximize{ background:#28cd41; }
+
+.titlebar-text{
+  flex:1;
+  text-align:center;
+  font-size:14px;
+  color:var(--muted);
+}
+
+.grid{
+  flex:1; padding:20px;
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(120px,1fr));
+  gap:24px; overflow:auto;
+}
+.tile{
+  border-radius:10px; padding:12px;
+  display:flex; flex-direction:column; gap:8px;
+  align-items:center; justify-content:center;
+  cursor:pointer; transition:.15s;
+  background:transparent;
+  height:120px;
+  position:relative;
+}
+.tile:hover{ background:#e6e6e6; }
+.tile-icon{ font-size:48px; text-align:center; }
+.tile-name{ font-size:13px; text-align:center; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Botão download estilo discreto */
+.download-btn{
+  position:absolute; top:6px; right:6px;
+  background:var(--accent); border:none;
+  color:#fff; font-size:12px;
+  padding:4px 6px; border-radius:6px;
+  opacity:0; transition:.2s;
+  cursor:pointer;
+}
+.tile:hover .download-btn{ opacity:1; }
+
+/* ================== EDITOR TERMINAL ================== */
+#editorTerminal{
+  display:none; position:fixed; inset:0;
+  background:rgba(250,250,250,0.98);
+  backdrop-filter: blur(10px);
+  color:var(--text);
+  z-index:999; flex-direction:column;
+}
+.editor-header{
+  padding:10px 14px; border-bottom:1px solid var(--border);
+  display:flex; justify-content:space-between; align-items:center;
+  background:#f5f5f7;
+}
+.editor-header span{ color:var(--muted); font-size:14px; }
+.editor-header button{
+  margin-left:8px;
+  background:var(--accent); color:#fff;
+  border:none; border-radius:6px;
+  padding:6px 14px; cursor:pointer;
+  font-size:14px; font-weight:500;
+  transition:.2s;
+}
+.editor-header button:hover{ filter:brightness(1.1); transform:translateY(-1px); }
+.editor-header button.close{ background:var(--danger); }
+
+#editorContent{
+  flex:1; width:100%; background:#fff;
+  border:none; outline:none; resize:none;
+  padding:14px; font-family:monospace; font-size:15px;
+  color:var(--text); line-height:1.5;
+  white-space:pre; overflow:auto;
+}
+</style>
+</head>
+<body>
+
+<div class="files-shell">
+  <div class="titlebar">
+    <div class="window-controls">
+      <span class="control-btn close"></span>
+      <span class="control-btn minimize"></span>
+      <span class="control-btn maximize"></span>
+    </div>
+    <div class="titlebar-text">📂 Gerenciador de Arquivos</div>
+  </div>
+  <div class="grid">
+    {% for arquivo in arquivos %}
+    <div class="tile" data-nome="{{ arquivo.nome }}">
+      <button class="download-btn" onclick="baixarArquivo('{{ arquivo.nome }}')">⬇</button>
+      <div class="tile-icon">
+        {% if arquivo.tipo == 'Pasta' %}📁{% else %}📄{% endif %}
+      </div>
+      <div class="tile-name">{{ arquivo.nome }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ============ TERMINAL EDITOR ============ -->
+<div id="editorTerminal">
+  <div class="editor-header">
+    <span id="editorFilename">Sem arquivo</span>
+    <div>
+      <button onclick="salvarArquivo()">Salvar</button>
+      <button class="close" onclick="fecharEditor()">Fechar</button>
+    </div>
+  </div>
+  <textarea id="editorContent"></textarea>
+</div>
+
+<script>
+let arquivoAtual = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".tile").forEach(tile => {
+    tile.addEventListener("dblclick", () => {
+      const nome = tile.getAttribute("data-nome");
+      abrirArquivo(nome);
+    });
+  });
+});
+
+function abrirArquivo(nome){
+  fetch("/abrir_arquivo", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ caminho: nome })
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    if(data.erro){ alert(data.erro); return; }
+    arquivoAtual = nome;
+    document.getElementById("editorFilename").innerText = "✏️ " + nome;
+    document.getElementById("editorContent").value = data.conteudo;
+    document.getElementById("editorTerminal").style.display = "flex";
+  });
+}
+
+function salvarArquivo(){
+  fetch("/salvar_arquivo", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ caminho: arquivoAtual, conteudo: document.getElementById("editorContent").value })
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    if(data.status === "ok"){ alert("✅ Arquivo salvo!"); fecharEditor(); }
+    else{ alert(data.erro || "Erro ao salvar"); }
+  });
+}
+
+function fecharEditor(){
+  document.getElementById("editorTerminal").style.display = "none";
+}
+
+function baixarArquivo(nome){
+  window.location.href = `/user/{{ current_user.id }}/downloads/${nome}`;
+}
+</script>
+
+</body>
+</html>
