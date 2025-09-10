@@ -159,7 +159,9 @@ def home():
 def inicio():
     maquinas = Maquinas.query.filter_by(maquina_dono_id=current_user.id).all()
     return render_template("inicio.html", maquinas=maquinas)
-
+@app.route('/admin')
+def admin():
+    return render_template("adminpaineil.html")
 @app.route("/entrar_maquina/<int:maquina_id>", methods=["GET", "POST"])
 @login_required
 def entrar_maquina(maquina_id: int):
@@ -605,3 +607,4 @@ def deletar_maquina(maquina_id):
 # ==========================================================
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)
+
